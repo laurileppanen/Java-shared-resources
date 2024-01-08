@@ -25,7 +25,7 @@ public class App1 {
 }
 
 class Count {
-    private int count = 0;
+    private volatile int count = 0;
 
     public int getCount() {
         return count;
@@ -50,14 +50,16 @@ class Counter extends Thread {
          * This thread's purpose in life is to 
          * increase the value of the shared count by one
          */
-        int oldCount = count.getCount();
-        // Alla oleva sleep ei ole pakollinen ongelman ilmenemiselle,
-        // mutta se lisää esiintymisen todennäköisyyttä
-        try {
-			Thread.sleep((long) (100 * Math.random()));
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-        count.setCount(oldCount + 1);
+        synchronized (count) {
+            int oldCount = count.getCount();
+            // Alla oleva sleep ei ole pakollinen ongelman ilmenemiselle,
+            // mutta se lisää esiintymisen todennäköisyyttä
+            try {
+                Thread.sleep((long) (100 * Math.random()));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            count.setCount(oldCount + 1);
+        }
     }
 }

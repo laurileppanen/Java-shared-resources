@@ -1,5 +1,6 @@
 package fi.utu.tech.assignment4;
 
+import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -7,8 +8,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class App4 {
-    // Huom! Main-metodiin ei pitäisi tarvita tehdä muutoksia!
-    // Main-metodi ainoastaan luo tilit ja alkaa tekemään samanaikaisia tilisiirtoja
+
     public static void main(String[] args) {
         System.out.println("Press Ctrl+C to terminate");
         Random rnd = new Random();
@@ -43,41 +43,31 @@ public class App4 {
 
 }
 
-/**
- * Tilisiirtoa kuvaava luokka
- */
+
 class BankTransfer implements Runnable {
 
     private Account from;
     private Account to;
     private double amount;
 
-    /**
-     * 
-     * @param from Tili, jolta siirretään
-     * @param to Tili, jolle siirretään
-     * @param amount Rahamäärä, joka siirretään
-     */
+
     public BankTransfer(Account from, Account to, double amount) {
         this.from = from;
         this.to = to;
         this.amount = amount;
     }
 
-    /**
-     * Tilisiirron suorittava metodi. Lukitsee lähde- ja kohdetilin säikeelle eksklusiivisesti.
-     */
+
     @Override
     public void run() {
-        // Otetaan säikeen nimi kätevämmän nimiseen muuttujaan
+        Account[] lockorder = {from, to};
+        Arrays.sort(lockorder);
         var name = Thread.currentThread().getName();
         // Lukitan 1. tili
-        synchronized (from) {
+        synchronized (lockorder[0]) {
             // Lukko ensimmäiseen tiliin saatu, aloitetaan toisen tilin lukitus
             System.out.printf("%s locked %d, waiting %d%n", name, from.accountNumber, to.accountNumber);
-            synchronized (to) {
-                // Säie sai yksinoikeudet molempiin tileihin, tarkistetaan tilien kate ja suoritetaan siirto,
-                // jos lakiehdot täyttyvät
+            synchronized (lockorder[1]) {
                 System.out.printf("%s gained exclusive access to %d and %d%n", name, from.accountNumber,
                         to.accountNumber);
                 if ((from.getBalance() - amount) > 0 && (to.getBalance() + amount) <= 1000) {

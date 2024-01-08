@@ -8,13 +8,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 
 public class Hub implements Runnable {
 
-    private Map<Integer, Light> lights = new HashMap<>();
+    private Map<Integer, Light> lights = Collections.synchronizedMap(new HashMap<>());
     private Random rnd = new Random();
     // Mikäli terminaalisi ei osaa tulostaa lamppujen tilaa oikein, voit kokeilla asettaa tämän arvoon "true"
     private boolean ALTERNATE_OUTPUT = false;
+    public ReadWriteLock removeLock = new ReentrantReadWriteLock();
 
     /**
      * Creates a new light
@@ -84,8 +88,10 @@ public class Hub implements Runnable {
      * Turn off all the lights
      */
     public void turnOffAllLights() {
-        for (var l : lights.values()) {
-            l.turnOff();
+        synchronized (lights) {
+            for (var l : lights.values()) {
+                l.turnOff();
+            }
         }
     }
 
@@ -93,8 +99,10 @@ public class Hub implements Runnable {
      * Turn on all the lights
      */
     public void turnOnAllLights() {
-        for (var l : lights.values()) {
-            l.turnOn();
+        synchronized (lights) {
+            for (var l : lights.values()) {
+                l.turnOn();
+            }
         }
     }
 
@@ -104,12 +112,12 @@ public class Hub implements Runnable {
     public String toString() {
         StringBuilder tmp = new StringBuilder();
         List<Integer> lightIds;
-        // The lights need to be in a List since the Set is not ordered
-        // (we want our lights to be in the same order on each invocation)
-        lightIds = new ArrayList<>(lights.keySet());
-        Collections.sort(lightIds);
-        for (int id : lightIds) {
-            tmp.append(String.format("%s ", lights.get(id).isPowerOn() ? "ON" : "OF"));
+        synchronized (lights) {
+            lightIds = new ArrayList<>(lights.keySet());
+            Collections.sort(lightIds);
+            for (int id : lightIds) {
+                tmp.append(String.format("%s ", lights.get(id).isPowerOn() ? "ON" : "OF"));
+            }
         }
         return tmp.toString();
     }

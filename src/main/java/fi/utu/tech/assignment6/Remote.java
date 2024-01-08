@@ -24,37 +24,37 @@ public class Remote extends Thread {
         while (true) {
             int next = rnd.nextInt(Action.values().length);
             Action nextAction = Action.values()[next];
-            List<Integer> lightIds = new ArrayList<>(hub.getLightIds());
-            int id = 0;
-            if (lightIds.size()>0) {
-                id = lightIds.get(rnd.nextInt(lightIds.size()));
-            } else {
-                nextAction = Action.ADD;
-            }
-            switch (nextAction) {
-                case TURNOFF:
-                    hub.turnOffLight(id);
-                    break;
-                case TOGGLE:
-                    hub.toggleLight(id);
-                    break;
-                case TURNOFFALL:
-                    hub.turnOffAllLights();
-                    break;
-                case TURNON:
-                    hub.turnOnLight(id);
-                    break;
-                case TURNONALL:
-                    hub.turnOnAllLights();
-                    break;
-                case REMOVE:
-                    hub.removeLight(id);
-                    break;
-                case ADD:
-                    hub.addLight();
-                    break;
-                default:
-                    break;
+            hub.removeLock.readLock().lock();
+            try {
+                List<Integer> lightIds = new ArrayList<>(hub.getLightIds());
+                int id = lightIds.get(rnd.nextInt(lightIds.size()));
+                switch (nextAction) {
+                    case TURNOFF:
+                        hub.turnOffLight(id);
+                        break;
+                    case TOGGLE:
+                        hub.toggleLight(id);
+                        break;
+                    case TURNOFFALL:
+                        hub.turnOffAllLights();
+                        break;
+                    case TURNON:
+                        hub.turnOnLight(id);
+                        break;
+                    case TURNONALL:
+                        hub.turnOnAllLights();
+                        break;
+                    case REMOVE:
+                        hub.removeLight(id);
+                        break;
+                    case ADD:
+                        hub.addLight();
+                        break;
+                    default:
+                        break;
+                }
+            } finally {
+                hub.removeLock.readLock().unlock();
             }
             try {
                 sleep(100);
